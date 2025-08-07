@@ -39,7 +39,7 @@ IXI: https://brain-development.org/ixi-dataset/
 
 ## Pretrained Model
 
-VQGAN stage1: [google drive](https://drive.google.com/file/d/1kpwEnjxBjSQaci8cWcl5x_JFldKxa9KJ/view?usp=drive_link)
+VQGAN stage1: [google drive](https://drive.google.com/file/d/1Xot2XvJXKFxRnWx5wIZrkHx_EHgWQZnf/view?usp=sharing)
 
 VQGAN stage2: [google drive](https://drive.google.com/file/d/1T9UKJaDa6bY3InJG6Ed7WOJhNaOsqylj/view?usp=sharing)
 
