@@ -1,9 +1,8 @@
 # Paper
 Adaptive Latent Diffusion Model for 3D Medical Image to Image Translation: Multi-modal Magnetic Resonance Imaging Study [Jonghun Kim], [Hyunjin Park] <br>
 Department of Electrical and Computer Engineering Sungkyunkwan University, Suwon, Korea <br>
-WACV 2024 [[paper]](https://openaccess.thecvf.com/content/WACV2024/html/Kim_Adaptive_Latent_Diffusion_Model_for_3D_Medical_Image_to_Image_WACV_2024_paper.html) [[arxiv]](https://arxiv.org/abs/2311.00265)<br>
 
-
+ [![arXiv](https://img.shields.io/badge/WACV2024-7604.7613-0F75BC.svg?style=plastic)](https://openaccess.thecvf.com/content/WACV2024/html/Kim_Adaptive_Latent_Diffusion_Model_for_3D_Medical_Image_to_Image_WACV_2024_paper.html) [![arXiv](https://img.shields.io/badge/arXiv-2509.24185-b31b1b.svg?style=plastic)](https://arxiv.org/abs/2509.24185v1)<br>
 
 # Overview
 
