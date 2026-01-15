@@ -136,6 +136,8 @@ class ULFtoHFBase(Brain3DBase):
         item["source"] = item["ulf"]
         item["target"] = item["hf"]
         item["subject_id"] = item.get("subject_id", f"subject_{i}")
+        # Add target_class for consistency with BraTS dataset (single class = 0)
+        item["target_class"] = torch.tensor(0)
         
         return item
 
