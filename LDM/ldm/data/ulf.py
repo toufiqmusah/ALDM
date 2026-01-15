@@ -5,35 +5,39 @@ import pandas as pd
 import torch
 from torch.utils.data import Dataset
 
-from monai import transforms
+from monai.transforms import (
+    Compose, LoadImaged, AddChanneld, Orientationd, EnsureTyped,
+    CropForegroundd, SpatialPadd, CenterSpatialCropd,
+    ScaleIntensityRangePercentilesd, RandFlipd, RandRotate90d
+)
 from monai.data import Dataset as MonaiDataset
 
 
-def get_transforms(phase="train"):
-    modalities = ["ulf", "hf"]
-
-    if phase == "train":
-        train_transforms = transforms.Compose(
+def get_transforms(phase="tCompose(
             [
-                transforms.RandFlipd(keys=modalities, prob=0.1, spatial_axis=0, allow_missing_keys=True),
-                transforms.RandFlipd(keys=modalities, prob=0.1, spatial_axis=1, allow_missing_keys=True),
-                transforms.RandFlipd(keys=modalities, prob=0.1, spatial_axis=2, allow_missing_keys=True),
+                RandFlipd(keys=modalities, prob=0.1, spatial_axis=0, allow_missing_keys=True),
+                RandFlipd(keys=modalities, prob=0.1, spatial_axis=1, allow_missing_keys=True),
+                RandFlipd(keys=modalities, prob=0.1, spatial_axis=2, allow_missing_keys=True),
                 # Add rotation for more augmentation
-                transforms.RandRotate90d(keys=modalities, prob=0.1, max_k=3, allow_missing_keys=True),
+                RandRotate90d(keys=modalities, prob=0.1, max_k=3, allow_missing_keys=True),
             ]
         )
     else:
-        train_transforms = transforms.Compose([])
+        train_transforms = Compose([])
     
-    return transforms.Compose(
+    return Compose(
         [
-            transforms.LoadImaged(keys=modalities, allow_missing_keys=True),
-            transforms.AddChanneld(keys=modalities, allow_missing_keys=True),
-            transforms.Orientationd(keys=modalities, axcodes="RAS", allow_missing_keys=True),
-            transforms.EnsureTyped(keys=modalities, allow_missing_keys=True),
+            LoadImaged(keys=modalities, allow_missing_keys=True),
+            AddChanneld(keys=modalities, allow_missing_keys=True),
+            Orientationd(keys=modalities, axcodes="RAS", allow_missing_keys=True),
+            EnsureTyped(keys=modalities, allow_missing_keys=True),
             # Crop foreground based on HF image
-            transforms.CropForegroundd(keys=modalities, source_key="hf", margin=0, allow_missing_keys=True),
+            CropForegroundd(keys=modalities, source_key="hf", margin=0, allow_missing_keys=True),
             # Pad to target size (160, 128, 128) based on your data
+            SpatialPadd(keys=modalities, spatial_size=(160, 128, 128), allow_missing_keys=True),
+            CenterSpatialCropd(keys=modalities, roi_size=(160, 128, 128), allow_missing_keys=True),
+            # Normalize intensity to [-1, 1] range
+            rget size (160, 128, 128) based on your data
             transforms.SpatialPadd(keys=modalities, spatial_size=(160, 128, 128), allow_missing_keys=True),
             transforms.CenterSpatialCropd(keys=modalities, roi_size=(160, 128, 128), allow_missing_keys=True),
             # Normalize intensity to [-1, 1] range
