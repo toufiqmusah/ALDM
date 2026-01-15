@@ -13,7 +13,11 @@ from monai.transforms import (
 from monai.data import Dataset as MonaiDataset
 
 
-def get_transforms(phase="tCompose(
+def get_transforms(phase="train"):
+    modalities = ["ulf", "hf"]
+
+    if phase == "train":
+        train_transforms = Compose(
             [
                 RandFlipd(keys=modalities, prob=0.1, spatial_axis=0, allow_missing_keys=True),
                 RandFlipd(keys=modalities, prob=0.1, spatial_axis=1, allow_missing_keys=True),
@@ -37,11 +41,7 @@ def get_transforms(phase="tCompose(
             SpatialPadd(keys=modalities, spatial_size=(160, 128, 128), allow_missing_keys=True),
             CenterSpatialCropd(keys=modalities, roi_size=(160, 128, 128), allow_missing_keys=True),
             # Normalize intensity to [-1, 1] range
-            rget size (160, 128, 128) based on your data
-            transforms.SpatialPadd(keys=modalities, spatial_size=(160, 128, 128), allow_missing_keys=True),
-            transforms.CenterSpatialCropd(keys=modalities, roi_size=(160, 128, 128), allow_missing_keys=True),
-            # Normalize intensity to [-1, 1] range
-            transforms.ScaleIntensityRangePercentilesd(
+            ScaleIntensityRangePercentilesd(
                 keys=modalities, 
                 lower=0.5, 
                 upper=99.5, 
