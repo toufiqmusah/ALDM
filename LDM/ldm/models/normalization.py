@@ -38,6 +38,8 @@ class SPADE(nn.Module):
 class SPADE_Multimodal(nn.Module):
     def __init__(self, num_classes, norm_nc, label_nc, kernel_size, norm_type='instance'):
         super().__init__()
+        # Handle None or ensure at least 1 class
+        num_classes = max(1, num_classes or 1)
         self.spades = nn.ModuleList([SPADE(norm_nc, label_nc, kernel_size, norm_type) for _ in range(num_classes)])
 
     def forward(self, x, y):
@@ -87,8 +89,10 @@ class SPADEResnetBlock(nn.Module):
         return F.leaky_relu(x, 2e-1)
     
 class SPADEGenerator(nn.Module):
-    def __init__(self,num_classes=5, z_dim=4, nf=128):
+    def __init__(self, num_classes=None, z_dim=4, nf=128):
         super().__init__()
+        # Handle None by defaulting to 1 class
+        num_classes = max(1, num_classes or 1)
         self.block = nn.ModuleList([
             SPADEResnetBlock(num_classes, z_dim, nf),
             SPADEResnetBlock(num_classes, nf, nf*2),

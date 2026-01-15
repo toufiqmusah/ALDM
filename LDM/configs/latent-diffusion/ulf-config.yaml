@@ -36,6 +36,7 @@ model:
     first_stage_config:
       target: ldm.models.vqgan.VQModel
       params:
+        num_classes: 1
         ckpt_path: stage2.ckpt
         stage: 2
         embed_dim: 4
