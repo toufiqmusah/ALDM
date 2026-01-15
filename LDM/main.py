@@ -583,15 +583,15 @@ if __name__ == "__main__":
                     "id": nowname,
                 }
             },
-            "testtube": {
-                "target": "pytorch_lightning.loggers.TestTubeLogger",
+            "csv": {
+                "target": "pytorch_lightning.loggers.CSVLogger",
                 "params": {
-                    "name": "testtube",
+                    "name": "csv_logs",
                     "save_dir": logdir,
                 }
             },
         }
-        default_logger_cfg = default_logger_cfgs["testtube"]
+        default_logger_cfg = default_logger_cfgs["csv"]
         if "logger" in lightning_config:
             logger_cfg = lightning_config.logger
         else:
