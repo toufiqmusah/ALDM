@@ -37,9 +37,9 @@ def get_transforms(phase="train"):
             EnsureTyped(keys=modalities, allow_missing_keys=True),
             # Crop foreground based on HF image
             CropForegroundd(keys=modalities, source_key="hf", margin=0, allow_missing_keys=True),
-            # Pad to target size (160, 128, 128) based on your data
-            SpatialPadd(keys=modalities, spatial_size=(160, 128, 128), allow_missing_keys=True),
-            CenterSpatialCropd(keys=modalities, roi_size=(160, 128, 128), allow_missing_keys=True),
+            # Pad to target size (160, 160, 128) based on your data
+            SpatialPadd(keys=modalities, spatial_size=(160, 160, 128), allow_missing_keys=True),
+            CenterSpatialCropd(keys=modalities, roi_size=(160, 160, 128), allow_missing_keys=True),
             # Normalize intensity to [-1, 1] range
             ScaleIntensityRangePercentilesd(
                 keys=modalities, 

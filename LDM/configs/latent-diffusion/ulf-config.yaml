@@ -10,7 +10,7 @@ model:
     timesteps: 1000
     first_stage_key: image
     cond_stage_key: image
-    image_size: 32
+    image_size: 40  # Latent size: (160,160,128)/4 = (40,40,32), use max dim
     channels: 4
     cond_stage_trainable: false
     conditioning_key: concat
@@ -18,7 +18,7 @@ model:
     unet_config:
       target: ldm.modules.diffusionmodules.openaimodel.UNetModel
       params:
-        image_size: 32
+        image_size: 40  # Match latent dimensions (40,40,32)
         in_channels: 8
         out_channels: 4
         model_channels: 128
