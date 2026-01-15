@@ -2,7 +2,7 @@ model:
   base_learning_rate: 1.0e-05
   target: ldm.models.diffusion.ddpm.LatentDiffusion
   params:
-    ckpt_path: last.ckpt # to be filled
+    # ckpt_path: last.ckpt # Uncomment to resume training from checkpoint
     linear_start: 0.0015
     linear_end: 0.0195
     num_timesteps_cond: 1
@@ -37,7 +37,7 @@ model:
       target: ldm.models.vqgan.VQModel
       params:
         num_classes: 1
-        ckpt_path: stage2.ckpt
+        # ckpt_path: stage2.ckpt # Path to pretrained VQ-GAN - train VQ-GAN first or remove to train from scratch
         stage: 2
         embed_dim: 4
         n_embed: 8192
