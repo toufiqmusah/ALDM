@@ -127,10 +127,26 @@ def get_parser(**parser_kwargs):
 
 
 def nondefault_trainer_args(opt):
-    parser = argparse.ArgumentParser()
-    parser = Trainer.add_argparse_args(parser)
-    args = parser.parse_args([])
-    return sorted(k for k in vars(args) if getattr(opt, k) != getattr(args, k))
+    # For PyTorch Lightning 2.0+, we manually check non-default trainer args
+    default_trainer_args = {
+        'accelerator': 'auto',
+        'devices': 'auto',
+        'max_epochs': None,
+        'min_epochs': None,
+        'check_val_every_n_epoch': 1,
+        'log_every_n_steps': 50,
+        'enable_checkpointing': True,
+        'enable_progress_bar': True,
+        'enable_model_summary': True,
+        'accumulate_grad_batches': 1,
+        'gradient_clip_val': None,
+        'gradient_clip_algorithm': 'norm',
+        'benchmark': None,
+        'deterministic': None,
+        'precision': 32,
+        'strategy': 'auto',
+    }
+    return sorted(k for k in default_trainer_args.keys() if hasattr(opt, k) and getattr(opt, k) != default_trainer_args[k])
 
 
 class WrappedDataset(Dataset):
@@ -473,7 +489,8 @@ if __name__ == "__main__":
     sys.path.append(os.getcwd())
 
     parser = get_parser()
-    parser = Trainer.add_argparse_args(parser)
+    # Note: add_argparse_args removed in PyTorch Lightning 2.0+
+    # Trainer args should be specified in config files or via --key=value
 
     opt, unknown = parser.parse_known_args()
     if opt.name and opt.resume:
@@ -525,17 +542,27 @@ if __name__ == "__main__":
         lightning_config = config.pop("lightning", OmegaConf.create())
         # merge trainer cli with config
         trainer_config = lightning_config.get("trainer", OmegaConf.create())
-        # default to ddp
-        trainer_config["accelerator"] = "ddp"
+        
+        # For PyTorch Lightning 2.0+: use 'devices' and 'accelerator' instead of 'gpus'
+        # Convert old 'gpus' config to new format if present
+        if "gpus" in trainer_config:
+            gpuinfo = trainer_config.pop("gpus")
+            if gpuinfo:
+                trainer_config["devices"] = gpuinfo if isinstance(gpuinfo, int) else len(gpuinfo.strip(",").split(','))
+                trainer_config["accelerator"] = "gpu"
+                print(f"Running on GPUs {gpuinfo}")
+                cpu = False
+            else:
+                cpu = True
+        elif "devices" in trainer_config and "accelerator" in trainer_config:
+            cpu = trainer_config["accelerator"] == "cpu"
+        else:
+            # Default to CPU if not specified
+            cpu = True
+            
         for k in nondefault_trainer_args(opt):
             trainer_config[k] = getattr(opt, k)
-        if not "gpus" in trainer_config:
-            del trainer_config["accelerator"]
-            cpu = True
-        else:
-            gpuinfo = trainer_config["gpus"]
-            print(f"Running on GPUs {gpuinfo}")
-            cpu = False
+            
         trainer_opt = argparse.Namespace(**trainer_config)
         lightning_config.trainer = trainer_config
 
@@ -664,7 +691,8 @@ if __name__ == "__main__":
 
         trainer_kwargs["callbacks"] = [instantiate_from_config(callbacks_cfg[k]) for k in callbacks_cfg]
 
-        trainer = Trainer.from_argparse_args(trainer_opt, **trainer_kwargs)
+        # Create Trainer with config dict (PyTorch Lightning 2.0+ compatible)
+        trainer = Trainer(**trainer_config, **trainer_kwargs)
         trainer.logdir = logdir  ###
 
         # data
@@ -681,7 +709,14 @@ if __name__ == "__main__":
         # configure learning rate
         bs, base_lr = config.data.params.batch_size, config.model.base_learning_rate
         if not cpu:
-            ngpu = len(lightning_config.trainer.gpus.strip(",").split(','))
+            # Handle both old 'gpus' and new 'devices' config
+            if hasattr(lightning_config.trainer, 'devices'):
+                devices = lightning_config.trainer.devices
+                ngpu = devices if isinstance(devices, int) else 1
+            elif hasattr(lightning_config.trainer, 'gpus'):
+                ngpu = len(str(lightning_config.trainer.gpus).strip(",").split(','))
+            else:
+                ngpu = 1
         else:
             ngpu = 1
         if 'accumulate_grad_batches' in lightning_config.trainer:
