@@ -6,7 +6,7 @@ import torch
 from torch.utils.data import Dataset
 
 from monai.transforms import (
-    Compose, LoadImaged, AddChanneld, Orientationd, EnsureTyped,
+    Compose, LoadImaged, EnsureChannelFirstd, Orientationd, EnsureTyped,
     CropForegroundd, SpatialPadd, CenterSpatialCropd,
     ScaleIntensityRangePercentilesd, RandFlipd, RandRotate90d
 )
@@ -32,7 +32,7 @@ def get_transforms(phase="train"):
     return Compose(
         [
             LoadImaged(keys=modalities, allow_missing_keys=True),
-            AddChanneld(keys=modalities, allow_missing_keys=True),
+            EnsureChannelFirstd(keys=modalities, allow_missing_keys=True),
             Orientationd(keys=modalities, axcodes="RAS", allow_missing_keys=True),
             EnsureTyped(keys=modalities, allow_missing_keys=True),
             # Crop foreground based on HF image
