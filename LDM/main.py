@@ -409,10 +409,10 @@ class ImageLogger(Callback):
             return True
         return False
 
-    def on_train_batch_end(self, trainer, pl_module, outputs, batch, batch_idx, dataloader_idx):
+    def on_train_batch_end(self, trainer, pl_module, outputs, batch, batch_idx, dataloader_idx=None):
         self.log_img(pl_module, batch, batch_idx, split="train")
 
-    def on_validation_batch_end(self, trainer, pl_module, outputs, batch, batch_idx, dataloader_idx):
+    def on_validation_batch_end(self, trainer, pl_module, outputs, batch, batch_idx, dataloader_idx=None):
         self.log_img(pl_module, batch, batch_idx, split="val")
 
 
@@ -420,23 +420,50 @@ class CUDACallback(Callback):
     # see https://github.com/SeanNaren/minGPT/blob/master/mingpt/callback.py
     def on_train_epoch_start(self, trainer, pl_module):
         # Reset the memory use counter
-        torch.cuda.reset_peak_memory_stats(trainer.root_gpu)
-        torch.cuda.synchronize(trainer.root_gpu)
+        device = self._get_device(trainer)
+        if device is not None:
+            torch.cuda.reset_peak_memory_stats(device)
+            torch.cuda.synchronize(device)
         self.start_time = time.time()
 
     def on_train_epoch_end(self, trainer, pl_module, outputs):
-        torch.cuda.synchronize(trainer.root_gpu)
-        max_memory = torch.cuda.max_memory_allocated(trainer.root_gpu) / 2 ** 20
+        device = self._get_device(trainer)
+        if device is not None:
+            torch.cuda.synchronize(device)
+            max_memory = torch.cuda.max_memory_allocated(device) / 2 ** 20
+        else:
+            max_memory = 0
         epoch_time = time.time() - self.start_time
 
         try:
-            max_memory = trainer.training_type_plugin.reduce(max_memory)
-            epoch_time = trainer.training_type_plugin.reduce(epoch_time)
+            # Try modern API first (strategy), then fall back to old API (training_type_plugin)
+            reduce_fn = getattr(trainer, 'strategy', None) or getattr(trainer, 'training_type_plugin', None)
+            if reduce_fn and hasattr(reduce_fn, 'reduce'):
+                max_memory = reduce_fn.reduce(max_memory)
+                epoch_time = reduce_fn.reduce(epoch_time)
 
             rank_zero_info(f"Average Epoch time: {epoch_time:.2f} seconds")
             rank_zero_info(f"Average Peak memory {max_memory:.2f}MiB")
         except AttributeError:
             pass
+    
+    def _get_device(self, trainer):
+        """Get the root device for CUDA operations, compatible with multiple PL versions."""
+        if not torch.cuda.is_available():
+            return None
+        
+        # Try new API first
+        if hasattr(trainer, 'strategy') and hasattr(trainer.strategy, 'root_device'):
+            device = trainer.strategy.root_device
+            if device.type == 'cuda':
+                return device
+        
+        # Fall back to old API
+        if hasattr(trainer, 'root_gpu'):
+            return trainer.root_gpu
+        
+        # Default to cuda:0
+        return torch.device('cuda:0')
 
 
 if __name__ == "__main__":
